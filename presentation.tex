@@ -1,0 +1,487 @@
+\documentclass{beamer}
+
+\usetheme{Boadilla}
+
+\usepackage{listings}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true}
+\title{C++14 is coming}
+%\subtitle{}
+\author{Kurbakov Dmytro}
+
+\begin{document}
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}{Overview}
+\tableofcontents
+\end{frame}
+
+
+\section{Removed functions}
+
+\begin{frame}
+\begin{center}
+\huge Removed functions
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{std::gets}
+Reads stdin into given character string until a newline character is found or end-of-file occurs.
+\begin{block}{C++11}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+char* std::gets( char* str );
+\end{lstlisting}
+\end{block}
+This unsafe I/O function from the C library is no longer available.
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3733.pdf}{ISO/IEC CD 14882, C++ 2014, National Body Comments }
+\end{frame}
+
+\begin{frame}[fragile]{std::rand}
+Returns a pseudo-random integral value between ​0​ and RAND\_MAX (0 and RAND\_MAX included).
+\begin{block}{C++11}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+// use current time as seed for random generator
+std::srand(std::time(nullptr));
+std::cout << std::rand() << '\n';
+\end{lstlisting}
+\end{block}
+This low-quality random number facility from the C library is discouraged in favour of the random library.
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3924.pdf}{Discouraging rand() in C++14, v2}
+\end{frame}
+
+\section{Language extentions}
+
+
+\begin{frame}
+\begin{center}
+\huge Language extentions
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Generalized return type deduction}
+C++11 \textbf{\textit{auto}} was introduced with limited area of usage. 
+
+C++11 missed \textbf{\textit{auto}} for return types... 
+\begin{quote}
+...due to time constraints, as the drafting didn't address various questions and concerns that the Core WG had.
+\end{quote}
+
+C++14 \textbf{\textit{auto}} can be used as return type... but not for virtual calls
+\begin{quote}
+It would be possible to allow return type deduction for virtual functions, but that would complicate both override checking and vtable layout, so it seems preferable to prohibit this. 
+\end{quote}
+
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3638.html}{Return type deduction for normal functions}
+\end{frame}
+
+\begin{frame}[fragile]{Generalized return type deduction}
+\begin{block}{C++11}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+auto f() -> int { return foo() * 42; }
+\end{lstlisting}
+\end{block}
+
+\begin{block}{C++14}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+auto f() { return foo() * 42; }
+auto g() {
+    if( expr ) { return foo() * 42; }
+    // multiple returns (types must be the same)
+    return bar.baz(84); 
+}
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}{decltype(auto)}
+\textbf{\textit{decltype(auto)}} is primarily useful for deducing the return type of forwarding functions and similar wrappers and not intended to be a widely used feature beyond that.
+
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3638.html}{Return type deduction for normal functions}
+\end{frame}
+
+\begin{frame}[fragile]{decltype(auto)}
+\begin{block}{Given}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+string  lookup1();
+string& lookup2();
+\end{lstlisting}
+\end{block}
+
+\begin{block}{C++11}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+string  wrapper_1() {return lookup1();}
+string& wrapper_2() {return lookup2();}
+\end{lstlisting}
+\end{block}
+
+\begin{block}{C++14}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+decltype(auto) wrapper_1() {return lookup1();}
+decltype(auto) wrapper_2() {return lookup2();}
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{decltype(auto)}
+Important: \textbf{\textit{decltype(auto)}} is sensitive to how you write the return statement
+
+\begin{block}{Quiz: what return these two functions?}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+decltype(auto) foo() {
+    auto str = lookup1(); return str;
+}
+decltype(auto) boo() {
+    auto str = lookup1(); return(str);
+}
+\end{lstlisting}
+\end{block}
+\vfill 
+\href{https://isocpp.org/wiki/faq/cpp14-language#decltype-auto}{Answer}
+\end{frame}
+
+\begin{frame}{decltype(auto) vs. auto}
+When should we use \textbf{auto} and when \textbf{decltype(auto)}?
+
+\begin{block}{Rules of thumb}
+\begin{itemize}
+\item Use \textbf{auto} if a reference type would never be correct.
+\item Use \textbf{decltype(auto)} only if a reference type could be correct.
+\end{itemize}
+\end{block}
+
+\vfill
+Source: \href{https://www.aristeia.com/TalkNotes/C++TypeDeductionandWhyYouCareCppCon2014.pdf}{C++ Type deduction and why you care. S. Mayers}
+\end{frame}
+
+\begin{frame}{Generalized lambda captures}
+\begin{itemize}
+\item C++11 no support fo capturing by move. 
+\item C++14 generalized lambda capture (capture by move, define arbitrary new local variables in the lambda object).
+\end{itemize}
+
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3648.html}{Wording Changes for Generalized Lambda-capture}
+
+\end{frame}
+
+
+\begin{frame}[fragile]{Generalized lambda captures}
+\begin{block}{C++14: capture by move}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++]
+// a unique_ptr is move-only 
+auto u = make_unique<Type>(arg1, arg2);
+// move the unique_ptr into the lambda 
+go.run( [ u=move(u) ] { foo( u ); } );
+\end{lstlisting} 
+\end{block}
+
+\begin{block}{C++14: define new variables}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+int x = 4;
+int z = [&r = x, y = x+1] {
+r += 2; // set x to 6; "R is for Renamed Ref"
+return y+2;  // return 7 to initialize z
+}(); // invoke lambda
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}{Generic lambdas}
+\begin{itemize}
+\item Lambda function parameters can now be auto to let the compiler deduce the type.
+\item Fix UB. See the example from the Appendix A.
+\end{itemize}
+
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3559.pdf}{Proposal for Generic (Polymorphic) Lambda Expressions}
+\end{frame}
+
+\begin{frame}[fragile]{Generic lambdas}
+\begin{block}{C++14}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+for_each(begin(v), end(v), [](const auto& x) { 
+	cout << x; 
+} );
+sort( begin(w), end(w), 
+	[](const auto& a, const auto& b) { 
+	return *a<*b; 
+} );
+auto size = [](const auto& m) { 
+	return m.size(); 
+};
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Default arguments for lambdas}
+Lambda expressions can now have default arguments
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+auto f = [](int a = 10){}; 
+f();
+\end{lstlisting}
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#974}{Default arguments for lambdas}
+\end{frame}
+
+
+\begin{frame}{Variable templates}
+Idea: Simplify definitions and uses of parameterized constants, allow the definition and uses of constexpr variable templates
+
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3651.pdf}{Variable Templates (Revision 1)}
+\end{frame}
+
+\begin{frame}[fragile]{Variable templates}
+\begin{block}{C++14}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+// variable template
+template<class T>
+constexpr T pi = T(3.1415926535897932385L);
+// function template
+template<class T>
+T circular_area(T r)
+{return pi<T> * r * r;}
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}{Extended constexpr}
+\begin{itemize}
+\item Allow declarations within constexpr functions, other than
+\begin{itemize}
+\item static or thread\_local variables 
+\item uninitialized variables
+\end{itemize}
+\item Allow if and switch statements (but not goto)
+\item Allow all looping statements: for (including range-based for), while, and do-while
+\item Allow mutation of objects whose lifetime began within the constant expression evaluation.
+\item Remove the rule that a constexpr non-static member function is implicitly const.
+\end{itemize}
+
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3652.html}{Relaxing constraints on constexpr functions constexpr member functions and implicit const}
+\end{frame}
+
+\begin{frame}[fragile]{Extended constexpr}
+\begin{block}{C++14}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+constexpr 
+int my_strcmp(const char* str1, 
+              const char* str2 ) {
+  int i = 0;
+  for(;str1[i] 
+       && str2[i] 
+       && str1[i] == str2[i]; ++i)
+      { }
+  if( str1[i] == str2[i] ) return 0;
+  if( str1[i] < str2[i] ) return -1;
+  return 1;
+}
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}{The [[deprecated]] attribute}
+\begin{itemize}
+
+\item The attribute-token deprecated can be used to mark names and entities whose use is still allowed, but is discouraged for some reason.
+
+\item The attribute may be applied to the declaration of a class, a typedef-name, a variable, a non-static data member, a function, an enumeration, or a template specialization.
+\end{itemize}
+
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3760.html}{[[deprecated]] attribute}
+
+\end{frame}
+
+\begin{frame}[fragile]{The [[deprecated]] attribute}
+\begin{block}{C++14}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+struct [[deprecated]] S;
+class Foo() {
+[[deprecated]] void f();
+};
+using PS [[deprecated]] = S*;
+union U { [[deprecated]] int n; };
+namespace [[deprecated]] NS { int x; }
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Tuple access by type}
+Allowing tuples to be addressed by type as well as by numerical index.
+
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+tuple<char, char, int> t('a', 'b', 1);
+int i = get<int>(t); // i == 1
+int j = get<2>(t); // j == 1
+char s = get<char>(t); // Compile-time error
+\end{lstlisting}
+
+\vfill
+Souce: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3670.html}{Wording for Addressing Tuples by Type: Revision 2} 
+\end{frame}
+
+\begin{frame}[fragile]{Constexpr member functions without const}
+A constexpr member function is no longer implicitly const. Only for data members does constexpr imply const now.	
+
+\begin{block}{C++11}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+// const function
+constexpr size_t size() noexcept;
+\end{lstlisting}
+\end{block}
+
+\begin{block}{C++14}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+// non-const function
+constexpr size_t size() noexcept;
+// const function
+constexpr size_t size() const noexcept;
+\end{lstlisting}
+\end{block}
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3669.pdf}{Fixing constexpr member functions without const}
+\end{frame}
+
+	
+\section{Library extentions}
+
+
+\begin{frame}
+\begin{center}
+\huge Library extentions
+\end{center}
+\end{frame}
+
+\begin{frame}{Shared locking}
+The class shared\_lock is a general-purpose shared mutex ownership wrapper allowing deferred locking, timed locking and transfer of lock ownership. Locking a shared\_lock locks the associated shared mutex in shared mode.
+
+As the result:
+\begin{itemize}
+\item Seven constructors to unique\_lock$<$Mutex$>$ were added
+\item A new header shared\_mutex was added
+\begin{itemize}
+\item class shared\_mutex;
+\item class upgrade\_mutex;
+\item template $<$class Mutex$>$ class shared\_lock;
+\item template $<$class Mutex$>$ class upgrade\_lock;
+\end{itemize}
+\end{itemize}
+
+\vfill
+Source: \href{http://www.open-std.org/JTC1/SC22/WG21/docs/papers/2013/n3659.html}{Shared locking in C++}
+\end{frame}
+
+\begin{frame}[fragile]{make\_unique}
+No comments =)
+
+\begin{block}{C++14}
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+auto p1 = make_shared<widget>();
+auto p2 = make_unique<widget>();
+\end{lstlisting}
+\end{block}
+
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3656.htm}{JTC1/SC22/WG21 N3656}
+\end{frame}
+
+\begin{frame}{Constant, reverse and constant reverse iterators}
+More iterators in C++14
+
+\begin{itemize}
+\item Constant iterators: std::cbegin, std::cend
+\item Reverse iterators: std::rbegin, std::rend
+\item Constant reverse iterators: std::rcbegin, std::rcend
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Overload for std::equal, std::missmatch, std::is\_permutation}
+Algorithms that operate on two ranges get new overloads that take begin and end iterators for both ranges rather than requiring the second range to be sufficiently long.
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3671.html}{Making non-modifying sequence operations more robust: Revision 2}
+\end{frame}
+
+\begin{frame}[fragile]{std::exchange}
+
+Replaces the value of obj with new\_value and returns the old value of obj.
+
+\begin{lstlisting}[firstnumber=1, label=glabels, xleftmargin=5pt, language=C++] 
+template<class T, class U = T>
+T exchange( T& obj, U&& new_value );
+\end{lstlisting}
+Important: T must meet the requirements of MoveConstructible. Also, it must be possible to move-assign objects of type U to objects of type T
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3668.html}{exchange utility function, revision 3}
+\end{frame}
+
+\begin{frame}{Compile-time integer sequences}
+The class template std::integer\_sequence represents a compile-time sequence of integers.
+Consis of:
+\begin{itemize}
+\item std::index\_sequence
+\item std::integer\_sequence
+\item std::make\_index\_sequence
+\item std::make\_integer\_sequence
+\end{itemize}
+\vfill
+Source: \href{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3658.html}{Compile-time integer sequences}
+\end{frame}
+
+
+\section{C++14 and NavKit. Open discussion}
+
+
+\begin{frame}{C++14 and NavKit. Open discussion}
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+Language:
+\begin{itemize}
+\item Generalized return type deduction
+\item decltype(auto)
+\item Generalized lambda captures
+\item Generic lambdas 
+\item Default arguments for lambdas
+\item Variable templates 
+\item Extended constexpr
+\item The [[deprecated]] attribute
+\item Tuple access by type
+\item Constexpr member functions without const
+\end{itemize}
+\end{column}
+\begin{column}{0.5\textwidth}
+Library
+\begin{itemize}
+\item Shared locking
+\item std::make\_unique
+\item const and reverse iterators
+\item Overload for std::equal, std::missmatch, std::is\_permutation
+\item std::exchange
+\item Compile-time integer sequences
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}	
+
+\begin{frame}{Whant to know more?}
+
+Some useful links for C++14
+\vfill
+\begin{itemize}
+\item \href{https://isocpp.org/files/papers/p1319r0.html}{Changes between C++11 and C++14}
+\item \href{https://isocpp.org/wiki/faq/cpp14-language}{C++14 Language Extensions}
+\item \href{https://isocpp.org/wiki/faq/cpp14-library}{C++14 Library Extensions}
+\item \href{https://www.oreilly.com/library/view/effective-modern-c/9781491908419/ch01.html}{Effective Modern C++ by Scott Meyers, Chapter 1. Deducing Types}
+\end{itemize}
+\end{frame}
+
+\end{document}
